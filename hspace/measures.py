@@ -55,26 +55,43 @@ def joint_entropy(data_array, pos=None, **kwds):
 
     # step 1: sort
 
-    if len(data_array.shape) == 1: # 1-D case, no position argument required
+    if len(data_array.shape) == 1: # 0-D case, no position argument required
 
         im_sort = np.sort(data_array) # , axis=0)
 
     # step 2: find change points/ switch points:
         switches = np.where(np.not_equal(im_sort[1:], im_sort[:-1]))[0]
 
-
-
-    elif len(data_array.shape) == 2: # 2-D case, requires iteration over positions
+    elif len(data_array.shape) == 2: # 1-D case, requires iteration over positions
         # im_sort = np.sort(data_array[:,pos], axis=0)
         # im_sort = data_array[np.argsort(data_array[:,0])]
         # new test as sorting did not return correct results:
 
         for p in pos:
-            data_array = data_array[data_array[:, p].argsort(kind='mergesort')]
+            # data_array = data_array[data_array[:, p].argsort(kind='mergesort')]
             data_array = data_array[data_array[:, p].argsort(kind='mergesort')]
         switches = np.where(np.not_equal(data_array[1:], data_array[:-1]).any(axis=1))[0]
 
- 
+    elif len(data_array.shape) == 3: # 1-D case, requires iteration over positions
+        # extract values:
+        sub_array = np.empty((data_array.shape[0],len(pos)))
+        i = 0
+        for p1, p2 in pos:
+            sub_array[:,i] = data_array[:,p1,p2]
+            i += 1
+
+        # now: sort:
+        for i in range(len(pos)):
+            sub_array = sub_array[sub_array[:, i].argsort(kind='mergesort')]
+
+        switches = np.where(np.not_equal(sub_array[1:], sub_array[:-1]).any(axis=1))[0]
+        #
+        # for p1,p2 in pos:
+        #     data_array = data_array[data_array[:, p1, p2].argsort(kind='mergesort')]
+        #     # data_array = data_array[data_array[:, p].argsort(kind='mergesort')]
+        # switches = np.where(np.not_equal(data_array[1:], data_array[:-1]).any(axis=1))[0]
+
+
     # determine differnces between switchpoints:
     n = data_array.shape[0]
     diff_array = np.diff(np.hstack([-1, switches, n - 1]))
