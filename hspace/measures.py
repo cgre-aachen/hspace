@@ -154,11 +154,11 @@ class EntropySection(object):
 
             **Optional keywords**:
             - n_jobs = int: number of processors to use for parallel execution (default: 1)
-
         """
         self.n_jobs = kwds.get('n_jobs', self.n_jobs)
-        self.h = np.empty_like(self.data[0, :, :], dtype='float64')
+
         if self.n_jobs == 1:
+            self.h = np.empty_like(self.data[0, :, :], dtype='float64')
             # standard sequential calculation:
             for i in range(self.data.shape[1]):
                 for j in range(self.data.shape[2]):
@@ -168,6 +168,42 @@ class EntropySection(object):
             global data # not ideal to create global variable - but required for parallel execution
             data = self.data
             h_par = joblib.Parallel(n_jobs=self.n_jobs)(joblib.delayed(entropy_section_par)(i, j)
+                                       for i in range(self.data.shape[1])
+                                       for j in range(self.data.shape[2]))
+
+            h_par = np.array(h_par)
+            self.h = h_par.reshape((self.data.shape[1], self.data.shape[2]))
+
+    def _joint_entropy_section(self, **kwds):
+        """Calculate joint entropy between all values in pos and all points in domain
+
+            **Optional keywords**:
+            - n_jobs = int: number of processors to use for parallel execution (default: 1)
+            - pos = list or array [[x1, x2, ...xn], [y1, y2, ...yn]]: list (or array)
+                of fixed positions for multivariate joint entropy calculation
+        """
+        self.n_jobs = kwds.get('n_jobs', self.n_jobs)
+        self.pos = kwds.get("pos", self.pos)
+        if len(self.pos) == 0:
+            raise AttributeError("No positions defined! Please set with `pos` argument.")
+
+        self.h = np.empty_like(self.data[0, :, :], dtype='float64')
+        if self.n_jobs == 1:
+            # standard sequential calculation:
+            for i in range(self.data.shape[1]):
+                for j in range(self.data.shape[2]):
+                    # add position point to pos array:
+                    pos_tmp = np.vstack([self.pos, np.array([i, j])])
+                    self.h[i, j] = joint_entropy(self.data, pos=pos_tmp)
+
+        else:
+            global data # not ideal to create global variable - but required for parallel execution
+            data = self.data
+            # if len(pos) > 0:
+            global pos # set positions as global
+            pos = self.pos
+
+            h_par = joblib.Parallel(n_jobs=self.n_jobs)(joblib.delayed(joint_entropy_section_par)(i, j)
                                        for i in range(self.data.shape[1])
                                        for j in range(self.data.shape[2]))
 
@@ -242,6 +278,12 @@ class EntropySection(object):
 
 def entropy_section_par(i, j):
     return joint_entropy(data[:, i, j])
+
+
+def joint_entropy_section_par(i, j):
+    pos_tmp = np.vstack([pos, np.array([i, j])])
+    return joint_entropy(data, pos=pos_tmp)
+
 
 
 # %%timeit
