@@ -149,8 +149,14 @@ class EntropySection(object):
         self.axis = axis
         self.pos = pos
 
-    def _calulate_entropy(self):
-        """Perform entropy calculation, in parallel if n_procs > 1"""
+    def _calulate_entropy(self, **kwds):
+        """Perform entropy calculation, in parallel if n_procs > 1
+
+            **Optional keywords**:
+            - n_jobs = int: number of processors to use for parallel execution (default: 1)
+
+        """
+        self.n_jobs = kwds.get('n_jobs', self.n_jobs)
         self.h = np.empty_like(self.data[0, :, :], dtype='float64')
         if self.n_jobs == 1:
             # standard sequential calculation:
@@ -181,10 +187,12 @@ class EntropySection(object):
 
         Args:
             **kwds:
+            n_jobs = int: number of processors to use for parallel execution (default: 1)
 
         Returns:
 
         """
+
         if not hasattr(self, "h"):
             self._calulate_entropy()
 
