@@ -174,7 +174,7 @@ class EntropySection(object):
             h_par = np.array(h_par)
             self.h = h_par.reshape((self.data.shape[1], self.data.shape[2]))
 
-    def _joint_entropy_section(self, **kwds):
+    def calc_joint_entropy_section(self, **kwds):
         """Calculate joint entropy between all values in pos and all points in domain
 
             **Optional keywords**:
@@ -187,14 +187,14 @@ class EntropySection(object):
         if len(self.pos) == 0:
             raise AttributeError("No positions defined! Please set with `pos` argument.")
 
-        self.h = np.empty_like(self.data[0, :, :], dtype='float64')
+        self.joint_entropy_section = np.empty_like(self.data[0, :, :], dtype='float64')
         if self.n_jobs == 1:
             # standard sequential calculation:
             for i in range(self.data.shape[1]):
                 for j in range(self.data.shape[2]):
                     # add position point to pos array:
                     pos_tmp = np.vstack([self.pos, np.array([i, j])])
-                    self.h[i, j] = joint_entropy(self.data, pos=pos_tmp)
+                    self.joint_entropy_section[i, j] = joint_entropy(self.data, pos=pos_tmp)
 
         else:
             global data # not ideal to create global variable - but required for parallel execution
@@ -208,7 +208,24 @@ class EntropySection(object):
                                        for j in range(self.data.shape[2]))
 
             h_par = np.array(h_par)
-            self.h = h_par.reshape((self.data.shape[1], self.data.shape[2]))
+            self.joint_entropy_section = h_par.reshape((self.data.shape[1], self.data.shape[2]))
+
+    def calc_cond_entropy_section(self, **kwds):
+        """Calculate conditional entropy between all values in pos and all points in domain
+
+            **Optional keywords**:
+            - n_jobs = int: number of processors to use for parallel execution (default: 1)
+            - pos = list or array [[x1, x2, ...xn], [y1, y2, ...yn]]: list (or array)
+                of fixed positions for multivariate joint entropy calculation
+        """
+        self.n_jobs = kwds.get('n_jobs', self.n_jobs)
+        self.pos = kwds.get("pos", self.pos)
+
+        h_joint_pos = joint_entropy(self.data, self.pos)
+        self.calc_joint_entropy_section()
+
+        self.cond_entropy_section = self.joint_entropy_section - h_joint_pos
+
 
 
     def _entropy_section_par(self, i, j):
@@ -296,3 +313,26 @@ def calc_parallel(data):
     h_par = np.array(h_par)
     h_par = h_par.reshape((data.shape[1],data.shape[2]))
     return h_par
+
+from matplotlib import colors
+# set the colormap and centre the colorbar
+class MidpointNormalize(colors.Normalize):
+    """
+    Normalise the colorbar so that diverging bars work there way either side from a prescribed midpoint value)
+
+    e.g. im=ax1.imshow(array, norm=MidpointNormalize(midpoint=0.,vmin=-100, vmax=100))
+
+    from http://chris35wills.github.io/matplotlib_diverging_colorbar/
+    """
+    def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+        self.midpoint = midpoint
+        colors.Normalize.__init__(self, vmin, vmax, clip)
+
+    def __call__(self, value, clip=None):
+        # I'm ignoring masked values and all kinds of edge cases to make a
+        # simple example...
+        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y), np.isnan(value))
+
+
+
