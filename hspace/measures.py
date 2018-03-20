@@ -249,8 +249,17 @@ class EntropySection(object):
         if not hasattr(self, "h"):
             self._calulate_entropy()
 
-        plt.imshow(self.h.transpose(), origin='lower left')
+        colorbar = kwds.get("colorbar", "True")
 
+        if colorbar:
+            from mpl_toolkits import axes_grid1
+            fig, ax = plt.subplots()
+            im = ax.imshow(self.h.transpose(), origin='lower left')
+            divider = axes_grid1.make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.05)
+            fig.colorbar(im, cax=cax)
+        else:
+            plt.imshow(self.h.transpose(), origin='lower left')
 
     def plot_multiple(self, **kwds):
         """Plot multiple random section realisations in one plot
@@ -292,6 +301,41 @@ class EntropySection(object):
         else:
             plt.show()
 
+    def plot_cond_entropy(self):
+        """Create plots for conditional entropy and mutual information estimation
+
+        Based on previously calculated conditional entropy and defined positions (self.calc_cond_entropy_section() )
+        """
+        if not hasattr(self, "cond_entropy_section"):
+            raise(AttributeError, "Conditional entropy not yet calculated! Please use self.calc_cond_entropy_secion()")
+
+        from mpl_toolkits import axes_grid1
+        fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(6, 8))
+        im = ax[0].imshow(self.h.T, origin='lower left')  # , vmin=-zmax, vmax=zmax)
+        ax[0].set_xlim([0, self.data.shape[1]])
+        ax[0].set_ylim([0, self.data.shape[2]])
+        divider = axes_grid1.make_axes_locatable(ax[0])
+        cax = divider.append_axes('right', size='5%', pad=0.15)
+        fig.colorbar(im, cax=cax);
+
+        im = ax[1].imshow(self.cond_entropy_section.T, origin='lower left')  # , vmin=-zmax, vmax=zmax)
+        ax[1].set_xlim([0, self.data.shape[1]])
+        ax[1].set_ylim([0, self.data.shape[2]])
+        divider = axes_grid1.make_axes_locatable(ax[1])
+        cax = divider.append_axes('right', size='5%', pad=0.15)
+        fig.colorbar(im, cax=cax);
+        ax[1].scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
+
+        im = ax[2].imshow(self.cond_entropy_section.T - self.h.T, origin='lower left',
+                          cmap='RdBu', interpolation='none',
+                          norm=MidpointNormalize(midpoint=0., vmin=-2, vmax=2))
+        ax[2].set_xlim([0, self.data.shape[1]])
+        ax[2].set_ylim([0, self.data.shape[2]])
+        divider = axes_grid1.make_axes_locatable(ax[2])
+        cax = divider.append_axes('right', size='5%', pad=0.15)
+        fig.colorbar(im, cax=cax);
+        ax[2].scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
+
 
 def entropy_section_par(i, j):
     return joint_entropy(data[:, i, j])
@@ -316,6 +360,8 @@ def calc_parallel(data):
 
 from matplotlib import colors
 # set the colormap and centre the colorbar
+
+
 class MidpointNormalize(colors.Normalize):
     """
     Normalise the colorbar so that diverging bars work there way either side from a prescribed midpoint value)
