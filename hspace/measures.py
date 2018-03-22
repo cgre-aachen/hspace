@@ -256,10 +256,65 @@ class EntropySection(object):
             fig, ax = plt.subplots()
             im = ax.imshow(self.h.transpose(), origin='lower left')
             divider = axes_grid1.make_axes_locatable(ax)
-            cax = divider.append_axes('right', size='5%', pad=0.05)
+            cax = divider.append_axes('right', size='5%', pad=0.15)
             fig.colorbar(im, cax=cax)
         else:
             plt.imshow(self.h.transpose(), origin='lower left')
+
+    def plot_cond_entropy(self, **kwds):
+        """Create a plot of conditional entropy
+
+        Based on previously calculated conditional entropy and defined positions (self.calc_cond_entropy_section() )
+        """
+        if not hasattr(self, "cond_entropy_section"):
+            raise(AttributeError, "Conditional entropy not yet calculated! Please use self.calc_cond_entropy_secion()")
+
+        colorbar = kwds.get("colorbar", "True")
+
+        if colorbar:
+            from mpl_toolkits import axes_grid1
+            fig, ax = plt.subplots()
+            if 'vmin' in kwds and 'vmax' in kwds:
+                im = ax.imshow(self.cond_entropy_section.transpose(), origin='lower left',
+                               vmin=kwds['vmin'], vmax=kwds['vmax'])
+            else:
+                im = ax.imshow(self.cond_entropy_section.transpose(), origin='lower left')
+            ax.set_xlim([0, self.data.shape[1]])
+            ax.set_ylim([0, self.data.shape[2]])
+            ax.scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
+            divider = axes_grid1.make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.15)
+            fig.colorbar(im, cax=cax)
+        else:
+            plt.imshow(self.cond_entropy_section.transpose(), origin='lower left')
+
+    def plot_mutual_info(self, **kwds):
+        """Create a plot of multivariate mutual information
+
+        Based on previously calculated conditional entropy and defined positions (self.calc_cond_entropy_section() )
+        """
+        if not hasattr(self, "cond_entropy_section"):
+            raise(AttributeError, "Conditional entropy not yet calculated! Please use self.calc_cond_entropy_secion()")
+
+        cmap = kwds.get("cmap", "gray")
+        colorbar = kwds.get("colorbar", "True")
+
+        if colorbar:
+            from mpl_toolkits import axes_grid1
+            fig, ax = plt.subplots()
+            if 'vmin' in kwds and 'vmax' in kwds:
+                im = ax.imshow(self.h.transpose() - self.cond_entropy_section.transpose(), origin='lower left',
+                               vmin=kwds['vmin'], vmax=kwds['vmax'], cmap=cmap)
+            else:
+                im = ax.imshow(self.h.transpose() - self.cond_entropy_section.transpose(), origin='lower left', cmap=cmap)
+            ax.set_xlim([0, self.data.shape[1]])
+            ax.set_ylim([0, self.data.shape[2]])
+            ax.scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
+            divider = axes_grid1.make_axes_locatable(ax)
+            cax = divider.append_axes('right', size='5%', pad=0.15)
+            fig.colorbar(im, cax=cax)
+        else:
+            plt.imshow(self.h.transpose() - self.cond_entropy_section.transpose(), origin='lower left', cmap=cmap)
 
     def plot_multiple(self, **kwds):
         """Plot multiple random section realisations in one plot
@@ -301,7 +356,7 @@ class EntropySection(object):
         else:
             plt.show()
 
-    def plot_cond_entropy(self):
+    def plot_cond_entropy_and_MI(self):
         """Create plots for conditional entropy and mutual information estimation
 
         Based on previously calculated conditional entropy and defined positions (self.calc_cond_entropy_section() )
