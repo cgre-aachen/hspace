@@ -181,9 +181,11 @@ class EntropySection(object):
             - n_jobs = int: number of processors to use for parallel execution (default: 1)
             - pos = list or array [[x1, x2, ...xn], [y1, y2, ...yn]]: list (or array)
                 of fixed positions for multivariate joint entropy calculation
+            - n_max = int : maximum number of data points (default: all)
         """
         self.n_jobs = kwds.get('n_jobs', self.n_jobs)
         self.pos = kwds.get("pos", self.pos)
+        n_max = kwds.get("n_max", self.data.shape[0])
         if len(self.pos) == 0:
             raise AttributeError("No positions defined! Please set with `pos` argument.")
 
@@ -194,11 +196,11 @@ class EntropySection(object):
                 for j in range(self.data.shape[2]):
                     # add position point to pos array:
                     pos_tmp = np.vstack([self.pos, np.array([i, j])])
-                    self.joint_entropy_section[i, j] = joint_entropy(self.data, pos=pos_tmp)
+                    self.joint_entropy_section[i, j] = joint_entropy(self.data[:n_max,:,:], pos=pos_tmp)
 
         else:
             global data # not ideal to create global variable - but required for parallel execution
-            data = self.data
+            data = self.data[:n_max,:,:]
             # if len(pos) > 0:
             global pos # set positions as global
             pos = self.pos
@@ -217,12 +219,14 @@ class EntropySection(object):
             - n_jobs = int: number of processors to use for parallel execution (default: 1)
             - pos = list or array [[x1, x2, ...xn], [y1, y2, ...yn]]: list (or array)
                 of fixed positions for multivariate joint entropy calculation
+            - n_max = int : maximum number of data points (default: all)
         """
         self.n_jobs = kwds.get('n_jobs', self.n_jobs)
         self.pos = kwds.get("pos", self.pos)
+        n_max = kwds.get("n_max", self.data.shape[0])
 
-        h_joint_pos = joint_entropy(self.data, self.pos)
-        self.calc_joint_entropy_section()
+        h_joint_pos = joint_entropy(self.data[:n_max,:,:], self.pos)
+        self.calc_joint_entropy_section(n_max=n_max)
 
         self.cond_entropy_section = self.joint_entropy_section - h_joint_pos
 
@@ -241,6 +245,7 @@ class EntropySection(object):
         Args:
             **kwds:
             n_jobs = int: number of processors to use for parallel execution (default: 1)
+            pts = 2-D array: point positions to include in plot
 
         Returns:
 
@@ -255,6 +260,10 @@ class EntropySection(object):
             from mpl_toolkits import axes_grid1
             fig, ax = plt.subplots()
             im = ax.imshow(self.h.transpose(), origin='lower left')
+            if 'pts' in kwds:
+                # plot points as overlay:
+                print("plot points")
+                ax.scatter(kwds['pts'][:, 0], kwds['pts'][:, 1], c='w', marker='s', s=10)
             divider = axes_grid1.make_axes_locatable(ax)
             cax = divider.append_axes('right', size='5%', pad=0.15)
             fig.colorbar(im, cax=cax)
