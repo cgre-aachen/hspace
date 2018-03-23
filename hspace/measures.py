@@ -154,19 +154,22 @@ class EntropySection(object):
 
             **Optional keywords**:
             - n_jobs = int: number of processors to use for parallel execution (default: 1)
+            - n_max = int : maximum number of data points (default: all)
+
         """
         self.n_jobs = kwds.get('n_jobs', self.n_jobs)
+        n_max = kwds.get("n_max", self.data.shape[0])
 
         if self.n_jobs == 1:
             self.h = np.empty_like(self.data[0, :, :], dtype='float64')
             # standard sequential calculation:
             for i in range(self.data.shape[1]):
                 for j in range(self.data.shape[2]):
-                    self.h[i, j] = joint_entropy(self.data[:, i, j])
+                    self.h[i, j] = joint_entropy(self.data[:n_max, i, j])
 
         else:
             global data # not ideal to create global variable - but required for parallel execution
-            data = self.data
+            data = self.data[:n_max]
             h_par = joblib.Parallel(n_jobs=self.n_jobs)(joblib.delayed(entropy_section_par)(i, j)
                                        for i in range(self.data.shape[1])
                                        for j in range(self.data.shape[2]))
