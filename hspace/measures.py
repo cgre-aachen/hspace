@@ -19,6 +19,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import joblib # for parallel execution
 
+try:
+    import pymc
+
+except ImportError:
+    print("pymc is not installed - Bayesian entropy estimation will not work.")
+
+
+
 # TODO at end: upload to pip, create setup.py (and conda install?) See also Tools -> Create setup.py!
 
 # TODO: include both: a conventional calculation on the basis of probability fields,
@@ -258,11 +266,14 @@ class EntropySection(object):
             self._calulate_entropy()
 
         colorbar = kwds.get("colorbar", "True")
+        cmap = kwds.get("cmap", 'viridis')
+        vmax = kwds.get("vmax", np.max(self.h))
+
 
         if colorbar:
             from mpl_toolkits import axes_grid1
             fig, ax = plt.subplots()
-            im = ax.imshow(self.h.transpose(), origin='lower left')
+            im = ax.imshow(self.h.transpose(), origin='lower left', cmap=cmap, vmax=vmax)
             if 'pts' in kwds:
                 # plot points as overlay:
                 print("plot points")
