@@ -17,7 +17,10 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import joblib # for parallel execution
+try:
+    import joblib # for parallel execution
+except ImportError:
+    pass
 
 try:
     import pymc
@@ -257,6 +260,7 @@ class EntropySection(object):
             **kwds:
             n_jobs = int: number of processors to use for parallel execution (default: 1)
             pts = 2-D array: point positions to include in plot
+            data_points = 2-D array: position of data points (e.g. used to generate realizations)
 
         Returns:
 
@@ -278,6 +282,8 @@ class EntropySection(object):
                 # plot points as overlay:
                 print("plot points")
                 ax.scatter(kwds['pts'][:, 0], kwds['pts'][:, 1], c='w', marker='s', s=10)
+            if 'data_points' in kwds:
+                ax.scatter(kwds['data_points'][:, 0], kwds['data_points'][:, 1], c='w', marker='s', s=5)
             divider = axes_grid1.make_axes_locatable(ax)
             cax = divider.append_axes('right', size='5%', pad=0.15)
             fig.colorbar(im, cax=cax)
