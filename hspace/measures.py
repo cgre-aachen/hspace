@@ -277,7 +277,7 @@ class EntropySection(object):
         if colorbar:
             from mpl_toolkits import axes_grid1
             fig, ax = plt.subplots()
-            im = ax.imshow(self.h.transpose(), origin='lower left', cmap=cmap, vmax=vmax)
+            im = ax.imshow(self.h.transpose(), origin='lower', cmap=cmap, vmax=vmax)
             if 'pts' in kwds:
                 # plot points as overlay:
                 print("plot points")
@@ -395,22 +395,22 @@ class EntropySection(object):
 
         from mpl_toolkits import axes_grid1
         fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(6, 8))
-        im = ax[0].imshow(self.h.T, origin='lower left')  # , vmin=-zmax, vmax=zmax)
+        im = ax[0].imshow(self.h.T, origin='lower')  # , vmin=-zmax, vmax=zmax)
         ax[0].set_xlim([0, self.data.shape[1]])
         ax[0].set_ylim([0, self.data.shape[2]])
         divider = axes_grid1.make_axes_locatable(ax[0])
         cax = divider.append_axes('right', size='5%', pad=0.15)
         fig.colorbar(im, cax=cax);
 
-        im = ax[1].imshow(self.cond_entropy_section.T, origin='lower left')  # , vmin=-zmax, vmax=zmax)
+        im = ax[1].imshow(self.cond_entropy_section.T, origin='lower')  # , vmin=-zmax, vmax=zmax)
         ax[1].set_xlim([0, self.data.shape[1]])
         ax[1].set_ylim([0, self.data.shape[2]])
         divider = axes_grid1.make_axes_locatable(ax[1])
         cax = divider.append_axes('right', size='5%', pad=0.15)
         fig.colorbar(im, cax=cax);
-        ax[1].scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
+#        ax[1].scatter(self.pos[:, 0], self.pos[:, 1], c='w', marker='s', s=10)
 
-        im = ax[2].imshow(self.cond_entropy_section.T - self.h.T, origin='lower left',
+        im = ax[2].imshow(self.cond_entropy_section.T - self.h.T, origin='lower',
                           cmap='RdBu', interpolation='none',
                           norm=MidpointNormalize(midpoint=0., vmin=-2, vmax=2))
         ax[2].set_xlim([0, self.data.shape[1]])
@@ -418,7 +418,7 @@ class EntropySection(object):
         divider = axes_grid1.make_axes_locatable(ax[2])
         cax = divider.append_axes('right', size='5%', pad=0.15)
         fig.colorbar(im, cax=cax);
-        ax[2].scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
+#        ax[2].scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
 
 
 def entropy_section_par(i, j):
