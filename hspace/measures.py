@@ -329,7 +329,7 @@ class EntropySection(object):
                     im = ax.imshow(self.cond_entropy_section, origin='lower')
             ax.set_xlim([0, self.data.shape[1]])
             ax.set_ylim([0, self.data.shape[2]])
-            ax.scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
+            ax.scatter(self.pos[:, 1], self.pos[:, 0], c='w', marker='s', s=10)
             divider = axes_grid1.make_axes_locatable(ax)
             cax = divider.append_axes('right', size='5%', pad=0.15)
             fig.colorbar(im, cax=cax)
@@ -372,7 +372,7 @@ class EntropySection(object):
                     im = ax.imshow(self.h - self.cond_entropy_section, origin='lower', cmap=cmap)
             ax.set_xlim([0, self.data.shape[1]])
             ax.set_ylim([0, self.data.shape[2]])
-            ax.scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
+            ax.scatter(self.pos[:, 1], self.pos[:, 0], c='w', marker='s', s=10)
             divider = axes_grid1.make_axes_locatable(ax)
             cax = divider.append_axes('right', size='5%', pad=0.15)
             fig.colorbar(im, cax=cax)
@@ -464,7 +464,7 @@ class EntropySection(object):
         divider = axes_grid1.make_axes_locatable(ax[1])
         cax = divider.append_axes('right', size='5%', pad=0.15)
         fig.colorbar(im, cax=cax);
-#        ax[1].scatter(self.pos[:, 0], self.pos[:, 1], c='w', marker='s', s=10)
+        ax[1].scatter(self.pos[:, 1], self.pos[:, 0], c='w', marker='s', s=10)
 
         if transpose:
             im = ax[2].imshow(self.cond_entropy_section.transpose() - self.h.transpose(), origin='lower',
@@ -479,7 +479,7 @@ class EntropySection(object):
         divider = axes_grid1.make_axes_locatable(ax[2])
         cax = divider.append_axes('right', size='5%', pad=0.15)
         fig.colorbar(im, cax=cax);
-#        ax[2].scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
+        ax[2].scatter(self.pos[:, 1], self.pos[:, 0], c='w', marker='s', s=10)
 
 
 def entropy_section_par(i, j):
