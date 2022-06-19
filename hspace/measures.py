@@ -261,6 +261,7 @@ class EntropySection(object):
             n_jobs = int: number of processors to use for parallel execution (default: 1)
             pts = 2-D array: point positions to include in plot
             data_points = 2-D array: position of data points (e.g. used to generate realizations)
+            transpose = Bool: transpose image
 
         Returns:
 
@@ -272,12 +273,16 @@ class EntropySection(object):
         colorbar = kwds.get("colorbar", "True")
         cmap = kwds.get("cmap", 'viridis')
         vmax = kwds.get("vmax", np.max(self.h))
+        transpose = kwds.get("transpose", False)
 
 
         if colorbar:
             from mpl_toolkits import axes_grid1
             fig, ax = plt.subplots()
-            im = ax.imshow(self.h.transpose(), origin='lower', cmap=cmap, vmax=vmax)
+            if transpose:
+                im = ax.imshow(self.h.transpose(), origin='lower', cmap=cmap, vmax=vmax)
+            else:
+                im = ax.imshow(self.h, origin='lower', cmap=cmap, vmax=vmax)
             if 'pts' in kwds:
                 # plot points as overlay:
                 print("plot points")
@@ -288,26 +293,40 @@ class EntropySection(object):
             cax = divider.append_axes('right', size='5%', pad=0.15)
             fig.colorbar(im, cax=cax)
         else:
-            plt.imshow(self.h.transpose(), origin='lower left')
+            if transpose:
+                plt.imshow(self.h.transpose(), origin='lower')
+            else:
+                plt.imshow(self.h, origin='lower')
 
     def plot_cond_entropy(self, **kwds):
         """Create a plot of conditional entropy
 
         Based on previously calculated conditional entropy and defined positions (self.calc_cond_entropy_section() )
+
+        Args:
+            transpose = Bool: transpose image
         """
         if not hasattr(self, "cond_entropy_section"):
             raise(AttributeError, "Conditional entropy not yet calculated! Please use self.calc_cond_entropy_secion()")
 
         colorbar = kwds.get("colorbar", "True")
+        transpose = kwds.get("transpose", False)
 
         if colorbar:
             from mpl_toolkits import axes_grid1
             fig, ax = plt.subplots()
             if 'vmin' in kwds and 'vmax' in kwds:
-                im = ax.imshow(self.cond_entropy_section.transpose(), origin='lower left',
+                if transpose:
+                    im = ax.imshow(self.cond_entropy_section.transpose(), origin='lower',
+                               vmin=kwds['vmin'], vmax=kwds['vmax'])
+                else:
+                    im = ax.imshow(self.cond_entropy_section, origin='lower',
                                vmin=kwds['vmin'], vmax=kwds['vmax'])
             else:
-                im = ax.imshow(self.cond_entropy_section.transpose(), origin='lower left')
+                if transpose:
+                    im = ax.imshow(self.cond_entropy_section.transpose(), origin='lower')
+                else:
+                    im = ax.imshow(self.cond_entropy_section, origin='lower')
             ax.set_xlim([0, self.data.shape[1]])
             ax.set_ylim([0, self.data.shape[2]])
             ax.scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
@@ -315,27 +334,42 @@ class EntropySection(object):
             cax = divider.append_axes('right', size='5%', pad=0.15)
             fig.colorbar(im, cax=cax)
         else:
-            plt.imshow(self.cond_entropy_section.transpose(), origin='lower left')
+            if transpose:
+                plt.imshow(self.cond_entropy_section.transpose(), origin='lower')
+            else:
+                plt.imshow(self.cond_entropy_section, origin='lower')
 
     def plot_mutual_info(self, **kwds):
         """Create a plot of multivariate mutual information
 
         Based on previously calculated conditional entropy and defined positions (self.calc_cond_entropy_section() )
+        
+        Args:
+            transpose = Bool: transpose image
+
         """
         if not hasattr(self, "cond_entropy_section"):
             raise(AttributeError, "Conditional entropy not yet calculated! Please use self.calc_cond_entropy_secion()")
 
         cmap = kwds.get("cmap", "gray")
         colorbar = kwds.get("colorbar", "True")
+        transpose = kwds.get("transpose", False)
 
         if colorbar:
             from mpl_toolkits import axes_grid1
             fig, ax = plt.subplots()
             if 'vmin' in kwds and 'vmax' in kwds:
-                im = ax.imshow(self.h.transpose() - self.cond_entropy_section.transpose(), origin='lower left',
+                if transpose:
+                    im = ax.imshow(self.h.transpose() - self.cond_entropy_section.transpose(), origin='lower',
+                               vmin=kwds['vmin'], vmax=kwds['vmax'], cmap=cmap)
+                else:
+                    im = ax.imshow(self.h - self.cond_entropy_section, origin='lower',
                                vmin=kwds['vmin'], vmax=kwds['vmax'], cmap=cmap)
             else:
-                im = ax.imshow(self.h.transpose() - self.cond_entropy_section.transpose(), origin='lower left', cmap=cmap)
+                if transpose:
+                    im = ax.imshow(self.h.transpose() - self.cond_entropy_section.transpose(), origin='lower', cmap=cmap)
+                else:
+                    im = ax.imshow(self.h - self.cond_entropy_section, origin='lower', cmap=cmap)
             ax.set_xlim([0, self.data.shape[1]])
             ax.set_ylim([0, self.data.shape[2]])
             ax.scatter(self.pos[:, 0], pos[:, 1], c='w', marker='s', s=10)
@@ -343,7 +377,10 @@ class EntropySection(object):
             cax = divider.append_axes('right', size='5%', pad=0.15)
             fig.colorbar(im, cax=cax)
         else:
-            plt.imshow(self.h.transpose() - self.cond_entropy_section.transpose(), origin='lower left', cmap=cmap)
+            if transpose:
+                plt.imshow(self.h.transpose() - self.cond_entropy_section.transpose(), origin='lower', cmap=cmap)
+            else:
+                plt.imshow(self.h - self.cond_entropy_section, origin='lower', cmap=cmap)
 
     def plot_multiple(self, **kwds):
         """Plot multiple random section realisations in one plot
@@ -358,6 +395,8 @@ class EntropySection(object):
             - *cmap* = matplotlib.cmap : colormap (default: YlOrRd)
             - *shuffle_events* = list of event ids : in addition to performing random draws, also
                 randomly shuffle events in list
+            - transpose = Bool: transpose image
+
         """
         ncols = kwds.get("ncols", 6)
         nrows = kwds.get("nrows", 2)
@@ -365,14 +404,19 @@ class EntropySection(object):
         ve = kwds.get("ve", 1.)
         savefig = kwds.get("savefig", False)
         figsize = kwds.get("figsize", (16, 5))
+        transpose = kwds.get("transpose", False)
 
         k = 0  # index for image
 
         f, ax = plt.subplots(nrows, ncols, figsize=figsize)
         for j in range(ncols):
             for i in range(nrows):
-                im = ax[i, j].imshow(self.data[k].T, interpolation='nearest',
-                                     aspect=ve, cmap=cmap_type, origin='lower left')
+                if transpose:
+                    im = ax[i, j].imshow(self.data[k].T, interpolation='nearest',
+                                     aspect=ve, cmap=cmap_type, origin='lower')
+                else:
+                    im = ax[i, j].imshow(self.data[k], interpolation='nearest',
+                                     aspect=ve, cmap=cmap_type, origin='lower')
                 # remove ticks and labels
                 ax[i, j].set_xticks([])
                 ax[i, j].set_yticks([])
@@ -385,24 +429,36 @@ class EntropySection(object):
         else:
             plt.show()
 
-    def plot_cond_entropy_and_MI(self):
+    def plot_cond_entropy_and_MI(self, **kwds):
         """Create plots for conditional entropy and mutual information estimation
 
         Based on previously calculated conditional entropy and defined positions (self.calc_cond_entropy_section() )
+        Args:
+            - transpose = Bool: transpose image
         """
         if not hasattr(self, "cond_entropy_section"):
             raise(AttributeError, "Conditional entropy not yet calculated! Please use self.calc_cond_entropy_secion()")
 
+        transpose = kwds.get("transpose", False)
+
+
         from mpl_toolkits import axes_grid1
         fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True, figsize=(6, 8))
-        im = ax[0].imshow(self.h.T, origin='lower')  # , vmin=-zmax, vmax=zmax)
+
+        if transpose:
+            im = ax[0].imshow(self.h.transpose(), origin='lower')  # , vmin=-zmax, vmax=zmax)
+        else: 
+            im = ax[0].imshow(self.h, origin='lower')  # , vmin=-zmax, vmax=zmax)
         ax[0].set_xlim([0, self.data.shape[1]])
         ax[0].set_ylim([0, self.data.shape[2]])
         divider = axes_grid1.make_axes_locatable(ax[0])
         cax = divider.append_axes('right', size='5%', pad=0.15)
         fig.colorbar(im, cax=cax);
 
-        im = ax[1].imshow(self.cond_entropy_section.T, origin='lower')  # , vmin=-zmax, vmax=zmax)
+        if transpose:
+            im = ax[1].imshow(self.cond_entropy_section.transpose(), origin='lower')  # , vmin=-zmax, vmax=zmax)
+        else:
+            im = ax[1].imshow(self.cond_entropy_section, origin='lower')  # , vmin=-zmax, vmax=zmax)
         ax[1].set_xlim([0, self.data.shape[1]])
         ax[1].set_ylim([0, self.data.shape[2]])
         divider = axes_grid1.make_axes_locatable(ax[1])
@@ -410,7 +466,12 @@ class EntropySection(object):
         fig.colorbar(im, cax=cax);
 #        ax[1].scatter(self.pos[:, 0], self.pos[:, 1], c='w', marker='s', s=10)
 
-        im = ax[2].imshow(self.cond_entropy_section.T - self.h.T, origin='lower',
+        if transpose:
+            im = ax[2].imshow(self.cond_entropy_section.transpose() - self.h.transpose(), origin='lower',
+                          cmap='RdBu', interpolation='none',
+                          norm=MidpointNormalize(midpoint=0., vmin=-2, vmax=2))
+        else:
+            im = ax[2].imshow(self.cond_entropy_section - self.h, origin='lower',
                           cmap='RdBu', interpolation='none',
                           norm=MidpointNormalize(midpoint=0., vmin=-2, vmax=2))
         ax[2].set_xlim([0, self.data.shape[1]])
